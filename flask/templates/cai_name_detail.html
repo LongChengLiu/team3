@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+        img{
+            width: auto;
+            height: 200px;
+        }
+        .vid{
+            height: 300px;
+            margin-left: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h2>成品图片</h2>
+    {% for img in range(nm.image_count|int) %}
+        <img src="{{ url_for('static',filename= '爬取/'+nm.dish_name+'/图片/'+ img|str+'.jpg') }}" alt="">
+    {% endfor %}
+    <br>
+    <h2>制作视频</h2>
+    <div>
+    {% for vide in nm.video_list|jsonloads %}
+        <div class="vid">
+{#             <iframe width="500px" height="380px" src="{{url_for('static',filename='爬取/'+nm.dish_name+'/'+ vide+'.mp4')}}" frameborder=0 allowfullscreen></iframe>#}
+        <video src="{{url_for('static',filename='爬取/'+nm.dish_name+'/'+ vide+'.mp4')}}" controls="controls">
+
+        </video>
+
+        </div>
+    {% endfor %}
+    </div>
+    <br>
+    <div style="clear: both">
+    {% for i in nm.make_method.split() %}
+        <div>
+        <h4>{{ i }}</h4>
+        </div>
+    {% endfor %}
+    </div>
+
+</body>
+</html>

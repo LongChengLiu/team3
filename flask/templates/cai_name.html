@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+        .wz{
+            text-align: center;
+            line-height: 50px;
+            text-decoration: none;
+            font-size: 30px;
+            margin-top: 20px;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <form action="/">
+        {% for cai in res2 %}
+            <a class="wz" href="http://si-yu.xn--6qq986b3xl/detail/{{ cai.dish_name }}">{{ cai.dish_name }}</a>
+        {% endfor %}
+    </form>
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+my_secert = 'mysql+pymysql://sy:llc123@192.168.1.166:3306/team3'
