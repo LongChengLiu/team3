@@ -11,4 +11,8 @@ import scrapy
 class RecipeItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    vid = scrapy.Field()
+    vurl = scrapy.Field()
+    name = scrapy.Field()
+    making = scrapy.Field()
+    pic = scrapy.Field()

@@ -2,16 +2,75 @@
 import scrapy
 import re
 import requests
+import json
+from recipe.items import RecipeItem
+from shujku import Session,Recipe,Making
+import re
+
+
+def get_keyword():
+    key_words = []
+    with open('keywords.txt', 'r', encoding='utf8') as f:
+        while 1:
+            key_word = f.readline()
+            if not key_word:
+                break
+            key_words.append(key_word.strip())
+    return key_words
 
 
 class MakeRecipeSpider(scrapy.Spider):
     name = 'make_recipe'
     allowed_domains = ['baike.baidu.com']
-    start_urls = ['http://baike.baidu.com/item/芹菜炒肉']
+    key_words = get_keyword()
+    # start_urls = ['http://baike.baidu.com/item/水煮鱼']
+    r1 = Session.query(Making).filter_by().all()
 
+    list_all = [j.dish_name for j in r1]
+    print('li',list_all)
+    print('ke',key_words)
+    for i in key_words:
+        if i in list_all:
+            key_words.remove(i)
+    print('ke',key_words)
+    start_urls = [f'http://baike.baidu.com/item/{i.strip()}' for i in key_words]
     def parse(self, response):
-        data = re.findall('"secondKind":"3","secondId":(.*?),"mid":""', response.text)
-        print(data)
+        name = response.url.split('/')[-1]
+        if response.url.split('/')[-1].isdigit():
+            name = response.url.split('/')[-2]
+        item = RecipeItem()
+        # method =
+        datas = re.findall('"secondKind":"3","secondId":(.*?),"mid":""', response.text)
+        flags = ['菜品制作', '做法一', '做法', '制作过程', '制作方法', '做法', '烹饪方法', '制作工艺']
+        methods = []
+        for flag in range(8):
+            print(name)
+            pattern1 = re.compile('</span>{}</h2>.*?编辑(.*?)<div class="album-list">'.format(flags[flag]),re.S)
+            ''''< h2 class ="title-text" > < span class ="title-prefix" > 红烧肉 < / span > 做法 < / h2 >
+            < a class ="edit-icon j-edit-link" data-edit-dl="1" href="javascript:;" > < em class ="cmn-icon wiki-lemma-icons wiki-lemma-icons_edit-lemma" > < / em > 编辑 < / a >
+            < / div >'''
+            methods = pattern1.findall(response.text)
+            if methods:
+                break
+
+        # pattern = re.compile(r'</span>做法一</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+        # pattern = re.compile(r'</span>做法</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+        # pattern = re.compile(r'</span>制作过程</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+        # pattern = re.compile(r'</span>做法</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+        # pattern = re.compile(r'</span>烹饪方法</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+        # pattern = re.compile(r'</span>制作工艺</h2>.*?</em>编辑</a>(.*?)<h2',re.S)
+
+        method = methods[0]
+        pre = re.compile('>(.*?)<')
+        text1 = '\n'.join(pre.findall(method)).strip()
+        if not methods:
+            text1 = '没有此做法'
+        pattern2 = re.compile(r'data-src="(.*?)"')
+        pics = pattern2.findall(response.text)
+
+        # print(method)
+        # print('_____',text)
+        # print(datas)
         headers = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
             'Accept-Encoding': 'gzip, deflate, br',
@@ -25,7 +84,22 @@ class MakeRecipeSpider(scrapy.Spider):
             'Sec-Fetch-User': '?1',
             'Upgrade-Insecure-Requests': '1',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'}
-        video = requests.get('https://baike.baidu.com/api/wikisecond/playurl?secondId=20538072',allow_redirects=False,headers=headers)
-        print(video.text)
-        with open('111.txt','w') as f:
-            f.write(video.text)
+        item['making'] = text1
+        item['pic'] = pics
+        for data in datas:
+            res = requests.get('https://baike.baidu.com/api/wikisecond/playurl?secondId={}'.format(data),
+                               allow_redirects=False, headers=headers)
+            # print(res.text)
+            data1 = json.loads(res.text)
+            if data1:
+                video_url = data1['list']['hlsUrl']
+            else:
+                video_url = None
+            # print(video_url)
+            item['vid'] = data
+            item['vurl'] = video_url
+            item['name'] = name
+            # video = requests.get(video_url)
+            # with open('111.mp4','wb') as f:
+            #     f.write(video.content)
+            yield item
